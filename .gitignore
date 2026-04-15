@@ -1,0 +1,37 @@
+# ── Maven build output ──────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+
+# ── IDE files ───────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# ── Secrets —────────────────────────────────
+.env
+**/.env
+*.tfvars
+vault-token.txt
+**/application-local.yml
+**/application-secrets.yml
+
+# ── Terraform ───────────────────────────────────────────────────
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# ── Docker ──────────────────────────────────────────────────────
+.docker/
+
+# ── OS files ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ────────────────────────────────────────────────────────
+*.log
+logs/
