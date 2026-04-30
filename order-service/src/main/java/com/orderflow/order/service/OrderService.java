@@ -13,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -70,5 +71,12 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         return orderMapper.toResponse(order);
+    }
+
+    public List<OrderResponse> findOrdersByCustomer(String customerId) {
+        return orderRepository.findByCustomerId(customerId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
     }
 }
