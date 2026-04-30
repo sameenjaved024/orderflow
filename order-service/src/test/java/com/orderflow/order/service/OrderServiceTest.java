@@ -117,6 +117,27 @@ class OrderServiceTest {
             assertThat(keyCaptor.getValue())
                     .isEqualTo(savedOrder.getId().toString());
         }
+
+        @Test
+        @DisplayName("should return order even when Kafka publish fails")
+        void shouldReturnResponseEvenIfKafkaFails() {
+            // GIVEN
+            Order savedOrder = buildSavedOrder();
+            OrderResponse expectedResponse = buildOrderResponse(savedOrder);
+
+            given(orderMapper.toEntity(any())).willReturn(buildOrder());
+            given(orderRepository.save(any())).willReturn(savedOrder);
+            given(orderMapper.toResponse(any())).willReturn(expectedResponse);
+            given(kafkaTemplate.send(anyString(), anyString(), any()))
+                    .willReturn(CompletableFuture.failedFuture(
+                            new RuntimeException("Kafka broker unavailable")));
+
+            // WHEN
+            OrderResponse result = orderService.createOrder(buildRequest());
+
+            // THEN — Kafka failure is logged, never thrown to the caller
+            assertThat(result).isEqualTo(expectedResponse);
+        }
     }
 
 
