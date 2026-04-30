@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,6 +49,7 @@ class OrderServiceTest {
     @Nested
     @DisplayName("createOrder")
     class CreateOrder {
+
         @Test
         @DisplayName("should persist order and publish Kafka event on success")
         void shouldPersistOrderAndPublishEvent() {
@@ -90,6 +92,30 @@ class OrderServiceTest {
             inOrder.verify(orderRepository).save(any());
             inOrder.verify(kafkaTemplate).send(anyString(), anyString(), any());
 
+        }
+
+        @Test
+        @DisplayName("should use orderId as Kafka message key")
+        void shouldPublishEventWithCorrectKey() {
+            // GIVEN
+            Order savedOrder = buildSavedOrder();
+
+            given(orderMapper.toEntity(any())).willReturn(buildOrder());
+            given(orderRepository.save(any())).willReturn(savedOrder);
+            given(orderMapper.toResponse(any()))
+                    .willReturn(buildOrderResponse(savedOrder));
+            given(kafkaTemplate.send(anyString(), anyString(), any()))
+                    .willReturn(CompletableFuture.completedFuture(null));
+
+            // WHEN
+            orderService.createOrder(buildRequest());
+
+            // THEN — orderId must be the Kafka key for correct partition routing
+            ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+            then(kafkaTemplate).should()
+                    .send(anyString(), keyCaptor.capture(), any());
+            assertThat(keyCaptor.getValue())
+                    .isEqualTo(savedOrder.getId().toString());
         }
     }
 
