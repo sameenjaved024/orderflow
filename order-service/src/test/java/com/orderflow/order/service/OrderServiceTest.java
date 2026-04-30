@@ -5,6 +5,7 @@ import com.orderflow.order.domain.OrderStatus;
 import com.orderflow.order.dto.CreateOrderRequest;
 import com.orderflow.order.dto.OrderResponse;
 import com.orderflow.order.event.OrderCreatedEvent;
+import com.orderflow.order.exception.OrderNotFoundException;
 import com.orderflow.order.mapper.OrderMapper;
 import com.orderflow.order.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -140,8 +142,46 @@ class OrderServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("findOrderById")
+    class FindOrderById {
+        @Test
 
-    // ── Builder helpers ──────────────────────────────────────────
+        @DisplayName("should return order when found")
+        void shouldReturnOrderWhenFound() {
+            // GIVEN
+            Order savedOrder = buildSavedOrder();
+            OrderResponse expectedResponse = buildOrderResponse(savedOrder);
+
+            given(orderRepository.findById(savedOrder.getId()))
+                    .willReturn(Optional.of(savedOrder));
+            given(orderMapper.toResponse(savedOrder))
+                    .willReturn(expectedResponse);
+
+            // WHEN
+            OrderResponse result = orderService.findOrderById(savedOrder.getId());
+
+            // THEN
+            assertThat(result).isEqualTo(expectedResponse);
+        }
+
+        @Test
+        @DisplayName("should throw OrderNotFoundException when order does not exist")
+        void shouldThrowWhenOrderNotFound() {
+            // GIVEN
+            UUID unknownId = UUID.randomUUID();
+            given(orderRepository.findById(unknownId))
+                    .willReturn(Optional.empty());
+
+            // WHEN / THEN
+            assertThatThrownBy(() -> orderService.findOrderById(unknownId))
+                    .isInstanceOf(OrderNotFoundException.class)
+                    .hasMessageContaining(unknownId.toString());
+        }
+    }
+
+
+// ── Builder helpers ──────────────────────────────────────────
 
     private CreateOrderRequest buildRequest() {
         return new CreateOrderRequest(

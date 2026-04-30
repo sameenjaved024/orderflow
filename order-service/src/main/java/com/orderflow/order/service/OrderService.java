@@ -4,6 +4,7 @@ import com.orderflow.order.domain.Order;
 import com.orderflow.order.dto.CreateOrderRequest;
 import com.orderflow.order.dto.OrderResponse;
 import com.orderflow.order.event.OrderCreatedEvent;
+import com.orderflow.order.exception.OrderNotFoundException;
 import com.orderflow.order.mapper.OrderMapper;
 import com.orderflow.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 
 @Service
@@ -53,13 +56,19 @@ public class OrderService {
 
         kafkaTemplate.send(ORDER_CREATED_TOPIC, order.getId().toString(), event)
                 .whenComplete((result, throwable) -> {
-            if (throwable != null) {
-                log.error("Failed to publish OrderCreatedEvent for orderId={}: {}",
-                        order.getId(), throwable.getMessage(), throwable);
-            } else {
-                log.info("OrderCreatedEvent published: orderId={}, partition={}, offset={}",
-                        order.getId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
-            }
-        });
+                    if (throwable != null) {
+                        log.error("Failed to publish OrderCreatedEvent for orderId={}: {}",
+                                order.getId(), throwable.getMessage(), throwable);
+                    } else {
+                        log.info("OrderCreatedEvent published: orderId={}, partition={}, offset={}",
+                                order.getId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                    }
+                });
+    }
+
+    public OrderResponse findOrderById(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        return orderMapper.toResponse(order);
     }
 }
