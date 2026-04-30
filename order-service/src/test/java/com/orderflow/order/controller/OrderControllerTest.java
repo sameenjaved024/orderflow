@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orderflow.order.domain.OrderStatus;
 import com.orderflow.order.dto.CreateOrderRequest;
 import com.orderflow.order.dto.OrderResponse;
+import com.orderflow.order.exception.OrderNotFoundException;
 import com.orderflow.order.service.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -97,6 +98,39 @@ class OrderControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/orders/{orderId}")
+    class GetOrderById {
+
+        @Test
+        @DisplayName("should return 200 with order when found")
+        void shouldReturn200WhenOrderFound() throws Exception {
+            // GIVEN
+            UUID orderId = UUID.randomUUID();
+            OrderResponse response = buildResponse();
+
+            given(orderService.findOrderById(orderId)).willReturn(response);
+
+            // WHEN / THEN
+            mockMvc.perform(get("/api/v1/orders/{orderId}", orderId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.customerId").value("cust-001"));
+        }
+
+        @Test
+        @DisplayName("should return 404 when order not found")
+        void shouldReturn404WhenOrderNotFound() throws Exception {
+            // GIVEN
+            UUID unknownId = UUID.randomUUID();
+            given(orderService.findOrderById(unknownId))
+                    .willThrow(new OrderNotFoundException(unknownId));
+
+            // WHEN / THEN
+            mockMvc.perform(get("/api/v1/orders/{orderId}", unknownId))
+                    .andExpect(status().isNotFound());
         }
     }
 
