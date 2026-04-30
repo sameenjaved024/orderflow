@@ -56,6 +56,48 @@ class OrderControllerTest {
                     .andExpect(jsonPath("$.productId").value("prod-001"))
                     .andExpect(jsonPath("$.status").value("PENDING"));
         }
+
+        @Test
+        @DisplayName("should return 400 when quantity is zero")
+        void shouldReturn400WhenQuantityIsZero() throws Exception {
+            // GIVEN — invalid quantity
+            CreateOrderRequest request = new CreateOrderRequest(
+                    "cust-001", "prod-001", 0, new BigDecimal("49.99"));
+
+            // WHEN / THEN
+            mockMvc.perform(post("/api/v1/orders")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("should return 400 when customerId is blank")
+        void shouldReturn400WhenCustomerIdIsBlank() throws Exception {
+            // GIVEN — blank customerId
+            CreateOrderRequest request = new CreateOrderRequest(
+                    "", "prod-001", 2, new BigDecimal("49.99"));
+
+            // WHEN / THEN
+            mockMvc.perform(post("/api/v1/orders")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("should return 400 when totalAmount is zero")
+        void shouldReturn400WhenTotalAmountIsZero() throws Exception {
+            // GIVEN — zero amount
+            CreateOrderRequest request = new CreateOrderRequest(
+                    "cust-001", "prod-001", 2, BigDecimal.ZERO);
+
+            // WHEN / THEN
+            mockMvc.perform(post("/api/v1/orders")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
     // ── Builders ─────────────────────────────────────────────────
