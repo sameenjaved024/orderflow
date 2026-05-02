@@ -10,8 +10,8 @@ import java.util.UUID;
 @Table(
         name = "fulfillments",
         indexes = {
-                @Index(name = "idx_fulfillments_order_id",  columnList = "order_id", unique = true),
-                @Index(name = "idx_fulfillments_status",     columnList = "status"),
+                @Index(name = "idx_fulfillments_order_id", columnList = "order_id", unique = true),
+                @Index(name = "idx_fulfillments_status", columnList = "status"),
                 @Index(name = "idx_fulfillments_created_at", columnList = "created_at")
         }
 )
