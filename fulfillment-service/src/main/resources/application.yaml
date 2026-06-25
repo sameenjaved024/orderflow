@@ -1,3 +1,4 @@
 spring:
-  application:
-    name: fulfillment-service
+  jpa:
+    hibernate:
+      ddl-auto: update
