@@ -29,9 +29,8 @@ public class FulfillmentEventConsumer {
 
     private final NotificationService notificationService;
 
-    @RabbitListener(
-            queues = "#{T(com.orderflow.notification.config.RabbitMQConfig).NOTIFICATION_QUEUE}"
-    )
+    @RabbitListener(queues = "notification.fulfillment")
+
     public void onFulfillmentCompleted(FulfillmentCompletedEvent event) {
         log.info("Received FulfillmentCompletedEvent: orderId={}, status={}",
                 event.orderId(), event.status());
